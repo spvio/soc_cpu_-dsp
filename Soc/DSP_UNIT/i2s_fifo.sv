@@ -10,6 +10,7 @@ module i2s_fifo#(parameter FIFO_LEN = 256)(
     output logic [15:0] read_data,
     output logic fifo_full,
     output logic fifo_empty,
+    output logic read_valid,
     output logic [15:0] FIFO[(FIFO_LEN-1):0],
     output logic [8:0]  PUTI
 );
@@ -35,7 +36,9 @@ FIFO #(.FIFO_LEN(FIFO_LEN)) l_FIFO (
     .write_enable(ready_l),
     .read_enable(read_enable),
     .o_pcm(read_data),
-    .fifo_full(fifo_full)
+    .fifo_full(fifo_full),
+    .fifo_empty(fifo_empty),
+    .read_valid(read_valid)
 );
 
 endmodule 
@@ -127,9 +130,10 @@ endmodule
 
 */
 module FIFO #(parameter FIFO_LEN = 256)(input clk, input tx_clk, input logic[15:0] val,  input logic write_enable,  output logic[15:0] o_pcm,
-input logic read_enable,
+input  logic read_enable,
+output logic read_valid,
+output logic fifo_empty,
 output logic fifo_full);
-logic fifo_empty;
 
 logic[15:0] FIFO[(FIFO_LEN-1):0];
 
@@ -158,6 +162,7 @@ logic[8:0] rd_sync_2;
 initial begin 
     fifo_empty = 1'b1;
     fifo_full = 1'b0;
+    read_valid = 1'b0;
     wr_ptr = '0;
     rd_ptr = '0;
     wr_sync_1 = '0;
@@ -211,7 +216,9 @@ always@(posedge clk) begin: read
     if(read_enable && !fifo_empty) begin 
         o_pcm <=  FIFO[rd_ptr[7:0]];
         rd_ptr <= rd_ptr_next;
+        read_valid <= 1'b1;
     end
+    else read_valid <= 1'b0;
     fifo_empty <= (rd_ptr_next == wr_ptr_bin);
 
 
