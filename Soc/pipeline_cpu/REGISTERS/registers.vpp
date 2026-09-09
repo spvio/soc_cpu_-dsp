@@ -1,0 +1,122 @@
+#! /usr/local/bin/vvp
+:ivl_version "14.0 (devel)" "(s20251012-220-g5fac9fae4)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision + 0;
+:vpi_module "/usr/local/lib/ivl/system.vpi";
+:vpi_module "/usr/local/lib/ivl/vhdl_sys.vpi";
+:vpi_module "/usr/local/lib/ivl/vhdl_textio.vpi";
+:vpi_module "/usr/local/lib/ivl/v2005_math.vpi";
+:vpi_module "/usr/local/lib/ivl/va_math.vpi";
+:vpi_module "/usr/local/lib/ivl/v2009.vpi";
+S_0x56c979df97f0 .scope package, "$unit" "$unit" 2 1;
+ .timescale 0 0;
+S_0x56c979df9980 .scope module, "ir" "ir" 3 32;
+ .timescale 0 0;
+    .port_info 0 /INPUT 1 "clk";
+    .port_info 1 /INPUT 1 "ir_load";
+    .port_info 2 /INPUT 32 "ir_bus";
+    .port_info 3 /OUTPUT 32 "ir";
+o0x76890bbcf018 .functor BUFZ 1, c4<z>; HiZ drive
+v0x56c979dbf9c0_0 .net "clk", 0 0, o0x76890bbcf018;  0 drivers
+v0x56c979e0dbd0_0 .var "ir", 31 0;
+o0x76890bbcf078 .functor BUFZ 32, c4<zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz>; HiZ drive
+v0x56c979e0dcb0_0 .net "ir_bus", 31 0, o0x76890bbcf078;  0 drivers
+o0x76890bbcf0a8 .functor BUFZ 1, c4<z>; HiZ drive
+v0x56c979e0dda0_0 .net "ir_load", 0 0, o0x76890bbcf0a8;  0 drivers
+E_0x56c979dfce00 .event posedge, v0x56c979dbf9c0_0;
+S_0x56c979df9b10 .scope module, "mar" "mar" 3 16;
+ .timescale 0 0;
+    .port_info 0 /INPUT 1 "clk";
+    .port_info 1 /INPUT 1 "mar_s";
+    .port_info 2 /INPUT 32 "pc";
+    .port_info 3 /INPUT 32 "alu_bus";
+    .port_info 4 /OUTPUT 32 "address_bus";
+L_0x56c979e0e970 .functor BUFZ 32, v0x56c979e0e1d0_0, C4<00000000000000000000000000000000>, C4<00000000000000000000000000000000>, C4<00000000000000000000000000000000>;
+v0x56c979e0df50_0 .net "address_bus", 31 0, L_0x56c979e0e970;  1 drivers
+o0x76890bbcf1c8 .functor BUFZ 32, c4<zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz>; HiZ drive
+v0x56c979e0e050_0 .net "alu_bus", 31 0, o0x76890bbcf1c8;  0 drivers
+o0x76890bbcf1f8 .functor BUFZ 1, c4<z>; HiZ drive
+v0x56c979e0e130_0 .net "clk", 0 0, o0x76890bbcf1f8;  0 drivers
+v0x56c979e0e1d0_0 .var "mar", 31 0;
+o0x76890bbcf258 .functor BUFZ 1, c4<z>; HiZ drive
+v0x56c979e0e2b0_0 .net "mar_s", 0 0, o0x76890bbcf258;  0 drivers
+o0x76890bbcf288 .functor BUFZ 32, c4<zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz>; HiZ drive
+v0x56c979e0e3c0_0 .net "pc", 31 0, o0x76890bbcf288;  0 drivers
+E_0x56c979dfc9f0 .event posedge, v0x56c979e0e130_0;
+S_0x56c979dbf790 .scope module, "pc" "pc" 3 2;
+ .timescale 0 0;
+    .port_info 0 /INPUT 1 "clk";
+    .port_info 1 /INPUT 1 "pc_s";
+    .port_info 2 /INPUT 32 "alu_bus";
+o0x76890bbcf3a8 .functor BUFZ 32, c4<zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz>; HiZ drive
+v0x56c979e0e580_0 .net "alu_bus", 31 0, o0x76890bbcf3a8;  0 drivers
+o0x76890bbcf3d8 .functor BUFZ 1, c4<z>; HiZ drive
+v0x56c979e0e680_0 .net "clk", 0 0, o0x76890bbcf3d8;  0 drivers
+v0x56c979e0e740_0 .var "pc", 31 0;
+o0x76890bbcf438 .functor BUFZ 1, c4<z>; HiZ drive
+v0x56c979e0e830_0 .net "pc_s", 0 0, o0x76890bbcf438;  0 drivers
+E_0x56c979de68a0 .event posedge, v0x56c979e0e680_0;
+    .scope S_0x56c979df9980;
+T_0 ;
+    %wait E_0x56c979dfce00;
+    %load/vec4 v0x56c979e0dda0_0;
+    %flag_set/vec4 8;
+    %jmp/0xz  T_0.0, 8;
+    %load/vec4 v0x56c979e0dcb0_0;
+    %assign/vec4 v0x56c979e0dbd0_0, 0;
+T_0.0 ;
+    %jmp T_0;
+    .thread T_0;
+    .scope S_0x56c979df9b10;
+T_1 ;
+    %load/vec4 v0x56c979e0e3c0_0;
+    %store/vec4 v0x56c979e0e1d0_0, 0, 32;
+    %end;
+    .thread T_1;
+    .scope S_0x56c979df9b10;
+T_2 ;
+    %wait E_0x56c979dfc9f0;
+    %load/vec4 v0x56c979e0e2b0_0;
+    %flag_set/vec4 8;
+    %jmp/0xz  T_2.0, 8;
+    %load/vec4 v0x56c979e0e3c0_0;
+    %assign/vec4 v0x56c979e0e1d0_0, 0;
+    %jmp T_2.1;
+T_2.0 ;
+    %load/vec4 v0x56c979e0e050_0;
+    %assign/vec4 v0x56c979e0e1d0_0, 0;
+T_2.1 ;
+    %jmp T_2;
+    .thread T_2;
+    .scope S_0x56c979dbf790;
+T_3 ;
+    %pushi/vec4 0, 0, 32;
+    %store/vec4 v0x56c979e0e740_0, 0, 32;
+    %end;
+    .thread T_3;
+    .scope S_0x56c979dbf790;
+T_4 ;
+    %wait E_0x56c979de68a0;
+    %load/vec4 v0x56c979e0e830_0;
+    %dup/vec4;
+    %pushi/vec4 1, 0, 1;
+    %cmp/u;
+    %jmp/1 T_4.1, 6;
+    %load/vec4 v0x56c979e0e740_0;
+    %addi 4, 0, 32;
+    %assign/vec4 v0x56c979e0e740_0, 0;
+    %jmp T_4.2;
+T_4.1 ;
+    %load/vec4 v0x56c979e0e580_0;
+    %assign/vec4 v0x56c979e0e740_0, 0;
+    %jmp T_4.2;
+T_4.2 ;
+    %pop/vec4 1;
+    %jmp T_4;
+    .thread T_4;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "-";
+    "p_registers.sv";

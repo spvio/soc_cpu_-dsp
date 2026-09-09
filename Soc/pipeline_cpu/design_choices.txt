@@ -1,0 +1,42 @@
+5/19/2026
+-fetch, decode
+-3 Global busses: IR(dedicated), data, address
+        -CPU <--> Memory
+-reading memory is continous| have 2 seperate signals
+-internal bus to route ALU output to PC, and Registers 
+        -ALU --> Register
+        -ALU --> PC
+1.decode set special signals(case statemet):
+2. have a pipeline for the result(ex.alu output register) so by the end of calcuting offset or new number put it in a register so it saves
+
+//when execute is done; decode wiill change control signals: propogate instrucion register every stage, and set control writeback signals in execture
+
+
+5/20/26
+-think of a way to control signals + stall:
+-forwarding for ALU
+-u also need to carry signals forward aswell: mem_enable mem_r_r, and registe_r(set in decode state)
+...//alu is going to decide between val(1) -> pc, rs1,  val(2) - rs2, or immediate
+-control signals that decide what to pic are decided in decoded state
+-let imm be decied by the decode state
+LD  -> I 
+STR -> S 
+ALU -> R or I 
+Branch -> J 
+
+5/26/26
+-validated ALU(seperatley)!
+
+5/27/26
+Goal: -Put ALU in pipeline       
+      -forwarding ALU
+
+-register file is based on r_execute;
+
+5/28/26
+-implement against reset signals
+
+8/24/26
+-EX/MEM forwarding
+
+
