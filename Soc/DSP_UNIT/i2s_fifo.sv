@@ -10,25 +10,16 @@ module i2s_fifo#(parameter FIFO_LEN = 256)(
     output logic [15:0] read_data,
     output logic fifo_full,
     output logic fifo_empty,
-    output logic read_valid,
-    output logic [15:0] FIFO[(FIFO_LEN-1):0],
-    output logic [8:0]  PUTI
+    output logic read_valid
 );
 //i2s 
 
 logic[15:0] l_pcm;
-logic[15:0] r_pcm;
-logic ready_r;
 logic ready_l;
 //fifo
-logic       HAZARD_r;
-logic       HAZARD_l;
-
-logic[15:0] out_r;
-logic[15:0] out_l;
 
 
-i2s i2s_inst(.tx_clk(tx_clk), .wl(wl), .sda(sda), .l_pcm(l_pcm), .r_pcm(r_pcm), .ready_l(ready_l), .ready_r(ready_r));
+i2s i2s_inst(.tx_clk(tx_clk), .wl(wl), .sda(sda), .l_pcm(l_pcm), .r_pcm(), .ready_l(ready_l), .ready_r());
 FIFO #(.FIFO_LEN(FIFO_LEN)) l_FIFO (
     .clk(clk),
     .tx_clk(tx_clk),
@@ -55,6 +46,9 @@ initial begin
     r_pcm = 0;
     l_pcm = 0;
     STATE   = 0;
+    r_wl = 0;
+    ready_l = 0;
+    ready_r = 0;
 
 end
 

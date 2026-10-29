@@ -2,7 +2,6 @@
 
 //consildations stage
 module alu(
-input logic clk,
 input logic[31:0] execute_pc,
 input logic[15:0] execute_ctrl,
 input logic[31:0] r_execute,
@@ -35,7 +34,6 @@ mux_forward mux_forward_inst(
 
 mux_select mux_select_inst(
     .execute_ctrl(execute_ctrl),
-    .isbranch(execute_ctrl[4]),
     .val1_fwd(val1_fwd),
     .val2_fwd(val2_fwd),
     .imm(imm_execute),
@@ -44,9 +42,8 @@ mux_select mux_select_inst(
     .val2(w_val2)
 );
 
-alu_main alu_main_inst(.clk(clk), .execute_ctrl(execute_ctrl), .r_execute(r_execute), .val1(w_val1), .val2(w_val2), .alu_out(alu_out));
+alu_main alu_main_inst(.execute_ctrl(execute_ctrl), .r_execute(r_execute), .val1(w_val1), .val2(w_val2), .alu_out(alu_out));
 condition_code condition_code_inst(
-    .clk(clk),
     .rs1val(val1_fwd),
     .rs2val(val2_fwd),
     .branch(branch),
@@ -95,7 +92,6 @@ endmodule
 
 module mux_select( 
     input  logic[15:0] execute_ctrl,
-    input  logic isbranch,
     input  logic[31:0] val1_fwd,
     input  logic[31:0] val2_fwd,
     input  logic[31:0] imm,
@@ -118,7 +114,6 @@ endmodule
 
 //execution state: outputs an alu register
 module alu_main(
-input   clk,
 input   logic[15:0] execute_ctrl,
 input   logic[31:0] r_execute, 
 input   logic[31:0] val1, 
@@ -132,7 +127,9 @@ output  logic[31:0] alu_out);
 
 always_comb begin : ALU_DECODE
     alu_out = 32'b0;
-    case(execute_ctrl[11:8])
+    if (r_execute[6:0] == 7'h37)
+        alu_out = val2;
+    else case(execute_ctrl[11:8])
         4'b0000: alu_out = val1 + val2;
         //STLI 2: ouputs a 1 if less than
         4'b1000: alu_out = val1 - val2;
@@ -145,9 +142,12 @@ always_comb begin : ALU_DECODE
         //left shift 
         4'b0001: alu_out = val1 << val2[4:0];
         //right shift
-        4'b0101: alu_out = r_execute[30]
-                            ? ($signed(val1) >>> val2[4:0])
-                            : (val1 >> val2[4:0]);
+        4'b0101: begin
+            if (r_execute[30])
+                alu_out = $signed(val1) >>> val2[4:0];
+            else
+                alu_out = val1 >> val2[4:0];
+        end
         default: alu_out = 32'b0;
     endcase
 end
@@ -157,7 +157,6 @@ end
 endmodule
 
 module condition_code( 
-    input logic clk, 
     input logic[2:0] exec_ctrl,
     input logic[31:0] rs1val,
     input logic[31:0] rs2val,

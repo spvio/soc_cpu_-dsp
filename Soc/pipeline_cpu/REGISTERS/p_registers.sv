@@ -1,7 +1,7 @@
 //consolidation
-module registers(input clk, input rst, input logic ir_load, input logic branch_taken, input logic stall, input logic[1:0] src2_fwd, input logic[15:0] writeback_ctrl, input logic[31:0] r_writeback, input logic[31:0] r_execute, input logic[31:0] r_memory, input logic[31:0] alu_result, input logic[31:0] data_out, input logic[31:0] alu_bus, input logic[31:0] alu_mem, input logic[31:0] mem_pc, output logic[31:0] data_in, output logic[31:0] rs1val, output logic[31:0] rs2val, output logic[31:0] pc);
+module registers(input clk, input rst, input logic ir_load, input logic branch_taken, input logic stall, input logic[1:0] src2_fwd, input logic[15:0] writeback_ctrl, input logic[31:0] r_writeback, input logic[31:0] r_execute, input logic[31:0] alu_result, input logic[31:0] alu_bus, input logic[31:0] alu_mem, output logic[31:0] data_in, output logic[31:0] rs1val, output logic[31:0] rs2val, output logic[31:0] pc);
   pc pc_inst(.clk(clk), .rst(rst), .ir_load(ir_load), .branch_taken(branch_taken), .stall(stall), .alu_bus(alu_bus), .r_execute(r_execute), .pc(pc));
-  register_file register_file_inst(.clk(clk), .src2_fwd(src2_fwd), .writeback_ctrl(writeback_ctrl), .r_writeback(r_writeback), .r_execute(r_execute), .r_memory(r_memory), .alu_wb(alu_result), .data_out(data_out), .alu_mem(alu_mem), .mem_pc(mem_pc), .strval(data_in), .rs1val(rs1val), .rs2val(rs2val));
+  register_file register_file_inst(.clk(clk), .src2_fwd(src2_fwd), .writeback_ctrl(writeback_ctrl), .r_writeback(r_writeback), .r_execute(r_execute), .alu_wb(alu_result), .alu_mem(alu_mem), .strval(data_in), .rs1val(rs1val), .rs2val(rs2val));
 endmodule 
 
                                                         //memory(LD)          //alu(ADD,etc)               
@@ -11,11 +11,8 @@ input  logic[1:0]   src2_fwd,
 input  logic[15:0]  writeback_ctrl,
 input  logic[31:0]  r_writeback,
 input  logic[31:0]  r_execute,
-input  logic[31:0]  r_memory,
 input  logic[31:0]  alu_wb,
-input  logic[31:0]  data_out,
 input  logic[31:0]  alu_mem,
-input  logic[31:0]  mem_pc,
 output logic[31:0]  strval, 
 output logic[31:0]  rs1val, 
 output logic[31:0]  rs2val);
@@ -30,12 +27,7 @@ end
 always_ff@(posedge clk) begin 
     if(writeback_ctrl[7] && (r_writeback[11:7] != 5'b0)) begin 
         //3 input mux
-        case(writeback_ctrl[1:0])
-            2'b00: REGISTERS[r_writeback[11:7]] <= alu_wb;
-            2'b01: REGISTERS[r_writeback[11:7]] <= data_out;
-            2'b10: REGISTERS[r_writeback[11:7]] <= mem_pc;
-            default: ;
-        endcase
+        REGISTERS[r_writeback[11:7]] <= alu_wb;
     
     end 
 

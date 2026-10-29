@@ -1,12 +1,19 @@
 
 
 //2 DATA TYPES: Q1.15 & Q16.0
-module fourier#(parameter FIFO_LEN = 256)(
+module fourier#(
+parameter FIFO_LEN = 256,
+parameter SIN_LUT_FILE = "DSP_UNIT/sin_lut.txt",
+parameter COS_LUT_FILE = "DSP_UNIT/cos_lut.txt"
+)(
 input  logic clk, 
 input  logic fifo_empty,
 input  logic read_valid,
 input  logic[15:0] pcm_value, 
-output logic read_enable);
+output logic read_enable,
+output logic result_valid,
+output logic signed[31:0] BINS_R[(FIFO_LEN-1):0],
+output logic signed[31:0] BINS_I[(FIFO_LEN-1):0]);
 
 //ping-pong memory
 logic data_valid;
@@ -15,23 +22,16 @@ logic signed[31:0] bank_b_r[255:0];
 logic signed[31:0] bank_a_i[255:0];
 logic signed[31:0] bank_b_i[255:0];
 
-logic[31:0]BINS_R[(FIFO_LEN-1):0];
-logic[31:0]BINS_I[(FIFO_LEN-1):0];
-logic signed [15:0] LUT_sin[255:0];
-logic signed [15:0] LUT_cos[255:0];
+logic signed [15:0] LUT_sin[0:255];
+logic signed [15:0] LUT_cos[0:255];
 
 logic[1:0] state;
 logic[7:0] index;
-parameter IDLE   = 2'b00;
 parameter COPY   = 2'b01;
 parameter EXEC   = 2'b10;
 parameter RESULT = 2'b11;
 
 //fft_variables
-logic signed[32:0] even_r;
-logic signed[32:0] odd_r;
-logic signed[32:0] even_i;
-logic signed[32:0] odd_i;
 logic signed[32:0] val_1_r;
 logic signed[32:0] val_2_r;
 logic signed[32:0] val_1_i;
@@ -41,10 +41,6 @@ logic signed[31:0] w_odd_r;
 logic signed[31:0] w_even_i;
 logic signed[31:0] w_odd_i;
 logic[15:0] addr;
-logic signed [15:0] s1_r;
-logic signed [15:0] s2_r;
-logic signed [15:0] s1_i;
-logic signed [15:0] s2_i;
 
 
 //general iterative loop
@@ -56,7 +52,7 @@ logic[15:0] x;
 
 //comb variables
 logic signed [47:0] cos_r;
-logic sgined[47:0] cos_i;
+logic signed[47:0] cos_i;
 logic signed[47:0] sin_r;
 logic signed[47:0] sin_i;
 logic signed[48:0] w1;
@@ -65,15 +61,8 @@ logic signed[48:0] w2;
 
 
 //shadow pipeline variables
-logic[2:0] ready; //(3 bits)
-logic[15:0] addr_1;
-logic[15:0] addr_2;
-
-
-initial begin
-end
-
 always@(posedge clk) begin 
+   result_valid <= 1'b0;
    case(state)  
       COPY: begin
          if(read_valid) begin 
@@ -151,7 +140,14 @@ always@(posedge clk) begin
 
          if(index == 255) begin
             index <= 0;
-            state <= IDLE;
+            state <= COPY;
+            result_valid <= 1'b1;
+            data_valid <= 1'b0;
+            r_s <= 16'd128;
+            pivot <= 16'd0;
+            x <= 16'd0;
+            k <= 16'd0;
+            dft_p <= 16'd2;
          end
          else begin 
             index <= index + 1;
@@ -195,9 +191,10 @@ end
 
 
 initial begin  
-   $readmemb("sin_lut.txt", LUT_sin);
-   $readmemb("cos_lut.txt", LUT_cos);
+   $readmemb(SIN_LUT_FILE, LUT_sin);
+   $readmemb(COS_LUT_FILE, LUT_cos);
    data_valid = 0;
+   result_valid = 0;
    state = COPY;
    r_s = 128;
    pivot = 0;

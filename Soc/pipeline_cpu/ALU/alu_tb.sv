@@ -1,7 +1,6 @@
 `timescale 1ns/1ps
 
 module alu_test;
-logic        clk;
 logic [31:0] execute_pc;
 logic [15:0] execute_ctrl;
 logic [31:0] r_execute;
@@ -16,7 +15,6 @@ logic [31:0] alu_out;
 logic        branch;
 
 alu dut (
-    .clk(clk),
     .execute_pc(execute_pc),
     .execute_ctrl(execute_ctrl),
     .r_execute(r_execute),
@@ -30,8 +28,6 @@ alu dut (
     .alu_out(alu_out),
     .branch(branch)
 );
-
-always #5 clk = ~clk;
 
 task automatic check_branch(
     input logic [2:0] funct3,
@@ -51,7 +47,6 @@ end
 endtask
 
 initial begin
-    clk          = 1'b0;
     execute_pc   = 32'h0000_0100;
     execute_ctrl = '0;
     r_execute    = '0;

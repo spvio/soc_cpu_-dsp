@@ -1,10 +1,10 @@
 module rst #(parameter MAX = 10)(input logic clk,input logic sw, output logic rst);
 
-logic[1:0] state;
 logic[15:0] counter;
-logic r_sw;
 logic flip_f1;
 logic flip_f2;
+
+
 //preecnt metastability:
 always_ff @(posedge clk) begin: meta
 flip_f1 <= sw;

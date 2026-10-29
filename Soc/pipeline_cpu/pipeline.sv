@@ -11,7 +11,6 @@ input logic[31:0] pc,
 input logic branch,
 output logic branch_taken,
 output logic ir_load,  
-output logic[15:0] decode_ctrl_out,
 output logic[15:0] execute_ctrl_out,
 output logic[15:0] memory_ctrl_out,
 output logic[15:0] writeback_ctrl_out,
@@ -22,7 +21,6 @@ output logic[31:0] alu_mem,
 output logic[31:0] alu_wb,
 output logic[31:0] imm_execute,
 output logic[31:0] execute_pc,
-output logic reg_w1,
 output logic[1:0] src1_fwd_out,
 output logic[1:0] src2_fwd_out,
 output logic[31:0] mem_pc_out,
@@ -35,7 +33,7 @@ typedef struct packed {
 logic isjmp;
 logic[2:0] branch_func3;
 logic[3:0] alu_func4;
-logic reg_wr;q
+logic reg_wr;
 
 logic mem_enable;
 logic rd_wr;    //(1: rd, 0: wr)
@@ -60,7 +58,6 @@ typedef struct packed {
 forward_t src1_fwd;
 forward_t src2_fwd;
 
-assign decode_ctrl_out    = decode_ctrl;
 assign execute_ctrl_out   = execute_ctrl;
 assign memory_ctrl_out    = memory_ctrl;
 assign writeback_ctrl_out = writeback_ctrl;
@@ -76,15 +73,12 @@ logic[31:0]imm_decode;
 //logic[31:0]r_decode;
 //logic[31:0]r_execute;
 //control signal pipeline
-logic[8:0] r_1;
-
 //pc pipeline:
 logic[31:0] fetch_pc;
-logic[31:0] requested_pc;
 logic[31:0] memory_pc;
 logic[31:0] writeback_pc;
 
-assign mem_pc_out = memory_pc;
+assign mem_pc_out = writeback_pc;
 
 always@(posedge clk) begin: track_rst
     ir_load <= !(rst);
@@ -105,6 +99,7 @@ always_comb begin: decode
             //load
             case(ir[6:0])
             7'h03: begin: LW_I_TYPE
+                decode_ctrl.branch_func3 = ir[14:12];
                 decode_ctrl.alu_func4  = 4'b0000;
                 decode_ctrl.reg_wr     = 1'b1;
                 decode_ctrl.mem_enable = 1'b1;
@@ -116,6 +111,7 @@ always_comb begin: decode
             end
 
             7'h23: begin: SW_S_TYPE
+                decode_ctrl.branch_func3 = ir[14:12];
                 decode_ctrl.alu_func4   = 4'b0000;
                 decode_ctrl.reg_wr  = 1'b0;
                 decode_ctrl.mem_enable = 1'b1;
@@ -128,12 +124,7 @@ always_comb begin: decode
 
             //tells alu how to behave
             7'h13: begin: ALU_I_Type
-                // Bit 30 selects SRLI/SRAI only. For every other I-type ALU
-                // instruction it is part of the immediate, not the ALU op.
-                decode_ctrl.alu_func4   = {
-                    (ir[14:12] == 3'b101) && ir[30],
-                    ir[14:12]
-                };
+                decode_ctrl.alu_func4   = {1'b0, ir[14:12]};
                 decode_ctrl.reg_wr      = 1'b1;
                 decode_ctrl.mem_enable  = 1'b0;
                 decode_ctrl.isbranch      = 1'b0;
@@ -144,7 +135,10 @@ always_comb begin: decode
 
             end
             7'h33: begin : ALU_R_Type
-                decode_ctrl.alu_func4   = {ir[30], ir[14:12]};
+                decode_ctrl.alu_func4   = {
+                    (ir[14:12] == 3'b000) && ir[30],
+                    ir[14:12]
+                };
                 decode_ctrl.reg_wr      = 1'b1;
                 decode_ctrl.mem_enable  = 1'b0;
                 decode_ctrl.isbranch  = 1'b0;
@@ -153,6 +147,22 @@ always_comb begin: decode
                 decode_ctrl.wb_s    = 2'b00;
 
 
+            end
+
+            7'h37: begin: LUI_U_TYPE
+                decode_ctrl.alu_func4   = 4'b0000;
+                decode_ctrl.reg_wr      = 1'b1;
+                decode_ctrl.src1        = 1'b0;
+                decode_ctrl.src2        = 1'b0;
+                decode_ctrl.wb_s        = 2'b00;
+            end
+
+            7'h17: begin: AUIPC_U_TYPE
+                decode_ctrl.alu_func4   = 4'b0000;
+                decode_ctrl.reg_wr      = 1'b1;
+                decode_ctrl.src1        = 1'b0;
+                decode_ctrl.src2        = 1'b0;
+                decode_ctrl.wb_s        = 2'b00;
             end
 
             7'h63: begin : BRANCH_B_TYPE
@@ -201,7 +211,7 @@ end
 always_comb begin: immediate_decode
     case (ir[6:0])
         // I-type immediates: LW and ALU-immediate instructions.
-        7'h03, 7'h13:
+        7'h03, 7'h13, 7'h67:
             imm_decode = {{20{ir[31]}}, ir[31:20]};
 
         // S-type immediate: stores.
@@ -218,8 +228,8 @@ always_comb begin: immediate_decode
         7'h6F:
             imm_decode = {{11{ir[31]}}, ir[31], ir[19:12],
                           ir[20], ir[30:21], 1'b0};
-        7'h67:
-            imm_decode = {{20{ir[31]}},ir[31:20]};
+        7'h17, 7'h37:
+            imm_decode = {ir[31:12], 12'b0};
 
         default:
             imm_decode = 32'd0;
@@ -234,7 +244,7 @@ always_ff@(posedge clk) begin: execute
         imm_execute  <= 32'b0;
         execute_pc   <= 32'b0;
     end
-    else if(!(stall ^ branch_taken)) begin
+    else if(!stall && !branch_taken) begin
         r_execute    <= ir;
         execute_ctrl <= decode_ctrl;
         imm_execute  <= imm_decode;
@@ -257,7 +267,7 @@ always_ff@(posedge clk) begin: memory
         alu_mem     <= 32'b0;
     end
     else begin
-        memory_pc      <= execute_pc;
+        memory_pc      <= execute_ctrl.isjmp ? execute_pc + 32'd4 : execute_pc;
         memory_ctrl    <= execute_ctrl;
         r_memory       <= r_execute;
         alu_mem        <= alu_bus;
